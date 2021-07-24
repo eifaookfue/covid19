@@ -4,23 +4,18 @@ from time import sleep
 from selenium import webdriver
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions
-#import chromedriver_binary
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.chrome.webdriver import WebDriver
 from selenium.webdriver.common.by import By
 from bs4 import BeautifulSoup
 
-# Mac
-chrome_path = r'C:\Apl\projects\slack\chromedriver\chromedriver'
-# Windows
-# chrome_path = r'C:\Users\hayato\Desktop\ScrapingBeginner\chromedriver'
+chrome_path = r'C:\Apl\chromedriver\chromedriver'
 
-# --> STEP1 : Yahoo画像検索に自動でアクセスする
 options = Options()
 options.add_argument('--incognito')
 
 driver = webdriver.Chrome(executable_path=chrome_path, options=options)
-#driver = webdriver.Chrome(options=options)
+
 url = 'https://v-yoyaku.jp/131237-edogawa'
 driver.get(url)
 
@@ -28,25 +23,17 @@ driver.get(url)
 
 #sleep(3)
 
-# --> STEP2 : プログラミングで検索する
 loginId = '5000580118'
 pwd = '19750815'
 login_box = driver.find_element_by_id('login_id')
 pwd_box = driver.find_element_by_id('login_pwd')
 
-
-
 login_button = driver.find_element_by_id('btn_login')
-#search_box = driver.find_element_by_class_name('SearchBox__searchInput')
-login_box
-.send_keys(loginId)
+login_box.send_keys(loginId)
 pwd_box.send_keys(pwd)
 driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
 sleep(3)
 login_button.click()
-
-
-#sleep(10)
 
 # 予約・変更するボタン
 preserve_button = WebDriverWait(driver, 10).until(
@@ -56,10 +43,7 @@ preserve_button = WebDriverWait(driver, 10).until(
         )
     )
 )
-#preserve_button = driver.find_element_by_id('mypage_accept')
 preserve_button.click()
-
-#sleep(5)
 
 # 接種会場を選択ボタン
 #site_button = driver.find_element_by_id('btn_Search_Medical')
@@ -70,13 +54,9 @@ site_button = WebDriverWait(driver, 10).until(
         )
     )
 )
-
 site_button.click()
 
-#sleep(5)
-
 # 検索ボタン
-#search_button = driver.find_element_by_css_selector('button#btn_search_medical[type="button"]')
 search_button = WebDriverWait(driver, 10).until(
     expected_conditions.visibility_of_element_located(
         (
@@ -84,7 +64,6 @@ search_button = WebDriverWait(driver, 10).until(
         )
     )
 )
-#sleep(5)
 search_button.click()
 sleep(5)
 #driver.find_element_by_tag_name('table')
