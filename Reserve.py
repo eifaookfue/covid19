@@ -1,6 +1,5 @@
 from os import system
 from time import sleep
-
 from selenium import webdriver
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions
@@ -8,6 +7,7 @@ from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.chrome.webdriver import WebDriver
 from selenium.webdriver.common.by import By
 from bs4 import BeautifulSoup
+
 
 chrome_path = r'C:\Apl\chromedriver\chromedriver'
 
@@ -46,7 +46,6 @@ preserve_button = WebDriverWait(driver, 10).until(
 preserve_button.click()
 
 # 接種会場を選択ボタン
-#site_button = driver.find_element_by_id('btn_Search_Medical')
 site_button = WebDriverWait(driver, 10).until(
     expected_conditions.visibility_of_element_located(
         (
@@ -56,6 +55,8 @@ site_button = WebDriverWait(driver, 10).until(
 )
 site_button.click()
 
+
+
 # 検索ボタン
 search_button = WebDriverWait(driver, 10).until(
     expected_conditions.visibility_of_element_located(
@@ -64,32 +65,22 @@ search_button = WebDriverWait(driver, 10).until(
         )
     )
 )
-search_button.click()
-sleep(5)
-#driver.find_element_by_tag_name('table')
-#table_element = driver.find_element_by_css_selector('table#search-medical-table')
-soup = BeautifulSoup(driver.page_source, 'html.parser')
-table = soup.select_one('table#search-medical-table')
-list = [e.getText() for e in table.select_one('tbody').select('tr')]
-print(list)
 
-if list[0] == '予約できる接種会場はありません。':
-    print('Not found.')
-    driver.quit()
+while True:
+    search_button.click()
+    sleep(5)
+    soup = BeautifulSoup(driver.page_source, 'html.parser')
+    table = soup.select_one('table#search-medical-table')
+    list = [e.getText() for e in table.select_one('tbody').select('tr')]
+    if list[0] != '予約できる接種会場はありません。':
+        break
+    else:
+        sleep(60)
 
 radio = driver.find_element_by_xpath('//*[@id="search-medical-table"]/tbody[1]/tr/td[1]')
 radio.click()
 sleep(10)
-#table_element.
 
-# --> STEP3 : スクロールして表示件数を増やす
-# height = 500
-# while height < 3000:
+#driver.quit()
 
-#     driver.execute_script("window.scrollTo(0, {});".format(height))
-#     height += 100
-#     print(height)
 
-#     sleep(1)
-
-driver.quit()
