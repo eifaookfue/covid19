@@ -10,6 +10,26 @@ from bs4 import BeautifulSoup
 import requests
 import json
 
+def notify(text):
+    webhook_url = 'https://hooks.slack.com/services/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'
+    requests.post(webhook_url, data = json.dumps({
+        "text": text
+    }))
+
+
+def check(driver):
+    soup = BeautifulSoup(driver.page_source, 'html.parser')
+    dict = {e['data-date']: e.select_one('.status-text').get_text() for e in soup.select('.fc-day-top.fc-future') if e.select_one('.status-text') is not None}
+    print(dict)
+    circle_date = [k for k, v in dict.items() if v == '○']
+    if len(circle_date) > 0:
+        notify(f'Circle: {",".join(circle_date)}')
+    triangle_date = [k for k, v in dict.items() if v == '△']
+    if len(triangle_date) > 0:
+        notify(f'Triangle: {",".join(triangle_date)}')
+
+
+
 chrome_path = r'C:\Apl\chromedriver\chromedriver'
 
 options = Options()
@@ -96,33 +116,20 @@ reserve_button.click()
 
 sleep(5)
 
-soup = BeautifulSoup(driver.page_source, 'html.parser')
-dict = {e['data-date']: e.select_one('.status-text').get_text() for e in soup.select('.fc-day-top.fc-future') if e.select_one('.status-text') is not None}
-print(dict)
-dict = {k: v for k, v in dict.items() if v == '○' or v == '△' }
-print(dict.values())
-
+check(driver)
 sleep(3)
 
 # 次へボタン 8月
 next_button = driver.find_element_by_css_selector('.fc-next-button')
 next_button.click()
 sleep(3)
-soup = BeautifulSoup(driver.page_source, 'html.parser')
-dict = {e['data-date']: e.select_one('.status-text').get_text() for e in soup.select('.fc-day-top.fc-future') if e.select_one('.status-text') is not None}
-print(dict)
-dict = {k: v for k, v in dict.items() if v == '○' or v == '△' }
-print(dict.values())
+check(driver)
 
 # 次へボタン 9月
 next_button = driver.find_element_by_css_selector('.fc-next-button')
 next_button.click()
 sleep(3)
-soup = BeautifulSoup(driver.page_source, 'html.parser')
-dict = {e['data-date']: e.select_one('.status-text').get_text() for e in soup.select('.fc-day-top.fc-future') if e.select_one('.status-text') is not None}
-print(dict)
-dict = {k: v for k, v in dict.items() if v == '○' or v == '△' }
-print(dict.values())
+check(driver)
 
 
 #driver.quit()
