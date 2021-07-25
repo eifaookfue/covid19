@@ -7,7 +7,8 @@ from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.chrome.webdriver import WebDriver
 from selenium.webdriver.common.by import By
 from bs4 import BeautifulSoup
-
+import requests
+import json
 
 chrome_path = r'C:\Apl\chromedriver\chromedriver'
 
@@ -77,9 +78,52 @@ while True:
     else:
         sleep(60)
 
-radio = driver.find_element_by_xpath('//*[@id="search-medical-table"]/tbody[1]/tr/td[1]')
+print(list)
+text = ",".join(list)
+webhook_url = 'https://hooks.slack.com/services/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'
+# requests.post(webhook_url, data = json.dumps({
+#     "text": text
+# }))
+
+radio = driver.find_element_by_id('search_medical_table_radio_0')
 radio.click()
-sleep(10)
+
+driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+
+# この接種会場を予約ボタン
+reserve_button = driver.find_element_by_id('btn_select_medical')
+reserve_button.click()
+
+sleep(5)
+
+soup = BeautifulSoup(driver.page_source, 'html.parser')
+dict = {e['data-date']: e.select_one('.status-text').get_text() for e in soup.select('.fc-day-top.fc-future') if e.select_one('.status-text') is not None}
+print(dict)
+dict = {k: v for k, v in dict.items() if v == '○' or v == '△' }
+print(dict.values())
+
+sleep(3)
+
+# 次へボタン 8月
+next_button = driver.find_element_by_css_selector('.fc-next-button')
+next_button.click()
+sleep(3)
+soup = BeautifulSoup(driver.page_source, 'html.parser')
+dict = {e['data-date']: e.select_one('.status-text').get_text() for e in soup.select('.fc-day-top.fc-future') if e.select_one('.status-text') is not None}
+print(dict)
+dict = {k: v for k, v in dict.items() if v == '○' or v == '△' }
+print(dict.values())
+
+# 次へボタン 9月
+next_button = driver.find_element_by_css_selector('.fc-next-button')
+next_button.click()
+sleep(3)
+soup = BeautifulSoup(driver.page_source, 'html.parser')
+dict = {e['data-date']: e.select_one('.status-text').get_text() for e in soup.select('.fc-day-top.fc-future') if e.select_one('.status-text') is not None}
+print(dict)
+dict = {k: v for k, v in dict.items() if v == '○' or v == '△' }
+print(dict.values())
+
 
 #driver.quit()
 
