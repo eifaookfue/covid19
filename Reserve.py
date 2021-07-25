@@ -29,109 +29,114 @@ def check(driver):
         notify(f'Triangle: {",".join(triangle_date)}')
 
 
+def execute():
 
-chrome_path = r'C:\Apl\chromedriver\chromedriver'
+    chrome_path = r'C:\Apl\chromedriver\chromedriver'
 
-options = Options()
-options.add_argument('--incognito')
+    options = Options()
+    options.add_argument('--incognito')
 
-driver = webdriver.Chrome(executable_path=chrome_path, options=options)
+    driver = webdriver.Chrome(executable_path=chrome_path, options=options)
 
-url = 'https://v-yoyaku.jp/131237-edogawa'
-driver.get(url)
+    url = 'https://v-yoyaku.jp/131237-edogawa'
+    driver.get(url)
 
-#driver.implicitly_wait(10)
+    #driver.implicitly_wait(10)
 
-#sleep(3)
+    #sleep(3)
 
-loginId = '5000580118'
-pwd = '19750815'
-login_box = driver.find_element_by_id('login_id')
-pwd_box = driver.find_element_by_id('login_pwd')
+    loginId = '5000580118'
+    pwd = '19750815'
+    login_box = driver.find_element_by_id('login_id')
+    pwd_box = driver.find_element_by_id('login_pwd')
 
-login_button = driver.find_element_by_id('btn_login')
-login_box.send_keys(loginId)
-pwd_box.send_keys(pwd)
-driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
-sleep(3)
-login_button.click()
+    login_button = driver.find_element_by_id('btn_login')
+    login_box.send_keys(loginId)
+    pwd_box.send_keys(pwd)
+    driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+    sleep(3)
+    login_button.click()
 
-# 予約・変更するボタン
-preserve_button = WebDriverWait(driver, 10).until(
-    expected_conditions.visibility_of_element_located(
-        (
-            By.ID, 'mypage_accept'
+    # 予約・変更するボタン
+    preserve_button = WebDriverWait(driver, 10).until(
+        expected_conditions.visibility_of_element_located(
+            (
+                By.ID, 'mypage_accept'
+            )
         )
     )
-)
-preserve_button.click()
+    preserve_button.click()
 
-# 接種会場を選択ボタン
-site_button = WebDriverWait(driver, 10).until(
-    expected_conditions.visibility_of_element_located(
-        (
-            By.ID, 'btn_Search_Medical'
+    # 接種会場を選択ボタン
+    site_button = WebDriverWait(driver, 10).until(
+        expected_conditions.visibility_of_element_located(
+            (
+                By.ID, 'btn_Search_Medical'
+            )
         )
     )
-)
-site_button.click()
+    site_button.click()
 
 
 
-# 検索ボタン
-search_button = WebDriverWait(driver, 10).until(
-    expected_conditions.visibility_of_element_located(
-        (
-            By.CSS_SELECTOR, 'button#btn_search_medical[type="button"]'
+    # 検索ボタン
+    search_button = WebDriverWait(driver, 10).until(
+        expected_conditions.visibility_of_element_located(
+            (
+                By.CSS_SELECTOR, 'button#btn_search_medical[type="button"]'
+            )
         )
     )
-)
+
+    while True:
+        search_button.click()
+        sleep(5)
+        soup = BeautifulSoup(driver.page_source, 'html.parser')
+        table = soup.select_one('table#search-medical-table')
+        list = [e.getText() for e in table.select_one('tbody').select('tr')]
+        if list[0] != '予約できる接種会場はありません。':
+            print(f'The number of medical room: {len(list)}')
+            break
+        else:
+            sleep(60)
+
+    print(list)
+    text = ",".join(list)
+    webhook_url = 'https://hooks.slack.com/services/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'
+    # requests.post(webhook_url, data = json.dumps({
+    #     "text": text
+    # }))
+
+    radio = driver.find_element_by_id('search_medical_table_radio_0')
+    radio.click()
+
+    driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+
+    # この接種会場を予約ボタン
+    reserve_button = driver.find_element_by_id('btn_select_medical')
+    reserve_button.click()
+
+    sleep(5)
+
+    check(driver)
+    sleep(3)
+
+    # 次へボタン 8月
+    next_button = driver.find_element_by_css_selector('.fc-next-button')
+    next_button.click()
+    sleep(3)
+    check(driver)
+
+    # 次へボタン 9月
+    next_button = driver.find_element_by_css_selector('.fc-next-button')
+    next_button.click()
+    sleep(3)
+    check(driver)
+
+    driver.quit()
 
 while True:
-    search_button.click()
-    sleep(5)
-    soup = BeautifulSoup(driver.page_source, 'html.parser')
-    table = soup.select_one('table#search-medical-table')
-    list = [e.getText() for e in table.select_one('tbody').select('tr')]
-    if list[0] != '予約できる接種会場はありません。':
-        break
-    else:
-        sleep(60)
-
-print(list)
-text = ",".join(list)
-webhook_url = 'https://hooks.slack.com/services/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'
-# requests.post(webhook_url, data = json.dumps({
-#     "text": text
-# }))
-
-radio = driver.find_element_by_id('search_medical_table_radio_0')
-radio.click()
-
-driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
-
-# この接種会場を予約ボタン
-reserve_button = driver.find_element_by_id('btn_select_medical')
-reserve_button.click()
-
-sleep(5)
-
-check(driver)
-sleep(3)
-
-# 次へボタン 8月
-next_button = driver.find_element_by_css_selector('.fc-next-button')
-next_button.click()
-sleep(3)
-check(driver)
-
-# 次へボタン 9月
-next_button = driver.find_element_by_css_selector('.fc-next-button')
-next_button.click()
-sleep(3)
-check(driver)
-
-
-#driver.quit()
+    execute()
+    sleep(60)    
 
 
