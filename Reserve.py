@@ -9,6 +9,12 @@ from selenium.webdriver.common.by import By
 from bs4 import BeautifulSoup
 import requests
 import json
+import logging
+
+logging.basicConfig(
+    format='%(asctime)s %(levelname)-8s %(message)s',
+    level=logging.INFO,
+    datefmt='%Y-%m-%d %H:%M:%S')
 
 def notify(text):
     webhook_url = 'https://hooks.slack.com/services/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'
@@ -29,7 +35,7 @@ def check(driver):
         notify(f'Triangle: {",".join(triangle_date)}')
 
 
-def execute():
+def execute(searched_roomd_list):
 
     chrome_path = r'C:\Apl\chromedriver\chromedriver'
 
@@ -41,9 +47,18 @@ def execute():
     url = 'https://v-yoyaku.jp/131237-edogawa'
     driver.get(url)
 
-    #driver.implicitly_wait(10)
-
-    #sleep(3)
+    # 私は優先接種対象者に該当します。
+    prio_radio_button = WebDriverWait(driver, 10).until(
+        expected_conditions.visibility_of_element_located(
+            (
+                By.NAME, 'prio_tgt'
+            )
+        )
+    )
+    driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+    sleep(3)
+    driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+    prio_radio_button.click()
 
     loginId = '5000580118'
     pwd = '19750815'
@@ -53,7 +68,7 @@ def execute():
     login_button = driver.find_element_by_id('btn_login')
     login_box.send_keys(loginId)
     pwd_box.send_keys(pwd)
-    driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+    #driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
     sleep(3)
     login_button.click()
 
@@ -93,21 +108,28 @@ def execute():
         sleep(5)
         soup = BeautifulSoup(driver.page_source, 'html.parser')
         table = soup.select_one('table#search-medical-table')
-        list = [e.getText() for e in table.select_one('tbody').select('tr')]
-        if list[0] != '予約できる接種会場はありません。':
-            print(f'The number of medical room: {len(list)}')
-            break
-        else:
+        if table.select_one('tbody > tr').getText() == '予約できる接種会場はありません。':
+            logging.info('Sleep 60 seconds because of no open rooms.')
             sleep(60)
+        else:
+            dict = {e.select_one('td:nth-of-type(1) > span > input').get('id'): e.select_one('td:nth-of-type(2)').getText() for e in table.select_one('tbody').select('tr')}
+            logging.info(dict)
+            searched_key = next(iter(dict.keys()))
+            logging.info(f"serched_key={searched_key}")
+            break
 
-    print(list)
-    text = ",".join(list)
-    webhook_url = 'https://hooks.slack.com/services/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'
-    # requests.post(webhook_url, data = json.dumps({
-    #     "text": text
-    # }))
 
-    radio = driver.find_element_by_id('search_medical_table_radio_0')
+    # 会場が一つしか見つからなかったら仕方ないのでもう一度同じ会場で実行
+    if len(dict) != 1:
+        dict = {k: v for k, v in dict.items() if v not in searched_roomd_list}
+        # すべて探索し終わったら仕方ないので先頭の会場でもう一度実行
+        if len(dict) > 0:
+            searched_key = next(iter(dict.keys()))
+            logging.info(f"serched_key={searched_key}")
+
+    searched_room = dict[searched_key]
+    logging.info(f"serched_room={searched_room}")
+    radio = driver.find_element_by_id(searched_key)
     radio.click()
 
     driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
@@ -135,8 +157,12 @@ def execute():
 
     driver.quit()
 
+    return searched_room
+
+searched_rooms = []
 while True:
-    execute()
+    searched_rooms.append(execute(searched_rooms))
+    logging.info("Sleep another 60 seconds.")
     sleep(60)    
 
 
