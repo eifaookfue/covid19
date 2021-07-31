@@ -130,19 +130,24 @@ def execute(searched_roomd_list):
                 for e in table.select_one('tbody[style="word-break: break-all"]').select('tr')}
             logging.info(dict)
             searched_key = next(iter(dict.keys()))
-            logging.info(f"serched_key={searched_key}")
             break
 
 
     # 会場が一つしか見つからなかったら仕方ないのでもう一度同じ会場で実行
-    if len(dict) != 1:
-        dict = {k: v for k, v in dict.items() if v not in searched_roomd_list}
+    if len(dict) == 1:
+        logging.info(f"serched_key={searched_key}")
+        searched_room = dict[searched_key]
+    else:
+        remained_dict = {k: v for k, v in dict.items() if v not in searched_roomd_list}
         # すべて探索し終わったら仕方ないので先頭の会場でもう一度実行
-        if len(dict) > 0:
-            searched_key = next(iter(dict.keys()))
+        if len(remained_dict) > 0:
+            searched_key = next(iter(remained_dict.keys()))
             logging.info(f"serched_key={searched_key}")
+            searched_room = remained_dict[searched_key]    
+        else:
+            logging.info(f"serched_key={searched_key}")
+            searched_room = dict[searched_key]    
 
-    searched_room = dict[searched_key]
     logging.info(f"serched_room={searched_room}")
     radio = driver.find_element_by_id(searched_key)
     radio.click()
@@ -164,6 +169,7 @@ def execute(searched_roomd_list):
         )
     )
     driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+    sleep(1)
     next_button.click()
     check(driver, "Second Month")
 
@@ -176,6 +182,7 @@ def execute(searched_roomd_list):
         )
     )
     driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+    sleep(1)
     next_button.click()
     check(driver, "Third Month")
 
