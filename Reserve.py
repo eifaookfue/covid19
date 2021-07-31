@@ -23,10 +23,17 @@ def notify(text):
     }))
 
 
-def check(driver):
+def check(driver, text):
+    WebDriverWait(driver, 10).until(
+        expected_conditions.visibility_of_element_located(
+            (
+                By.CSS_SELECTOR, '.fc-day-top.fc-future'
+            )
+        )
+    )
     soup = BeautifulSoup(driver.page_source, 'html.parser')
     dict = {e['data-date']: e.select_one('.status-text').get_text() for e in soup.select('.fc-day-top.fc-future') if e.select_one('.status-text') is not None}
-    print(dict)
+    logging.info(f"{text}={dict}")
     circle_date = [k for k, v in dict.items() if v == '○']
     if len(circle_date) > 0:
         notify(f'Circle: {",".join(circle_date)}')
@@ -105,14 +112,22 @@ def execute(searched_roomd_list):
 
     while True:
         search_button.click()
-        sleep(5)
+        WebDriverWait(driver, 20).until(
+            expected_conditions.visibility_of_any_elements_located(
+                (
+                    By.CSS_SELECTOR, 'table#search-medical-table > tbody[style="word-break: break-all"] > tr'
+                )
+            )
+        )
+        #sleep(5)
         soup = BeautifulSoup(driver.page_source, 'html.parser')
         table = soup.select_one('table#search-medical-table')
-        if table.select_one('tbody > tr').getText() == '予約できる接種会場はありません。':
+        if table.select_one('tbody[style="word-break: break-all"] > tr').getText() == '予約できる接種会場はありません。':
             logging.info('Sleep 60 seconds because of no open rooms.')
             sleep(60)
         else:
-            dict = {e.select_one('td:nth-of-type(1) > span > input').get('id'): e.select_one('td:nth-of-type(2)').getText() for e in table.select_one('tbody').select('tr')}
+            dict = {e.select_one('td:nth-of-type(1) > span > input').get('id'): e.select_one('td:nth-of-type(2)').getText() 
+                for e in table.select_one('tbody[style="word-break: break-all"]').select('tr')}
             logging.info(dict)
             searched_key = next(iter(dict.keys()))
             logging.info(f"serched_key={searched_key}")
@@ -138,22 +153,31 @@ def execute(searched_roomd_list):
     reserve_button = driver.find_element_by_id('btn_select_medical')
     reserve_button.click()
 
-    sleep(5)
-
-    check(driver)
-    sleep(3)
+    check(driver, "First Month")
 
     # 次へボタン 8月
-    next_button = driver.find_element_by_css_selector('.fc-next-button')
+    next_button = WebDriverWait(driver, 10).until(
+        expected_conditions.element_to_be_clickable(
+            (
+                By.CSS_SELECTOR, '.fc-next-button'
+            )
+        )
+    )
+    driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
     next_button.click()
-    sleep(3)
-    check(driver)
+    check(driver, "Second Month")
 
     # 次へボタン 9月
-    next_button = driver.find_element_by_css_selector('.fc-next-button')
+    next_button = WebDriverWait(driver, 10).until(
+        expected_conditions.element_to_be_clickable(
+            (
+                By.CSS_SELECTOR, '.fc-next-button'
+            )
+        )
+    )
+    driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
     next_button.click()
-    sleep(3)
-    check(driver)
+    check(driver, "Third Month")
 
     driver.quit()
 
