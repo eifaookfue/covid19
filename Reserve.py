@@ -1,5 +1,6 @@
 from os import system
 from time import sleep
+from pit import Pit
 from selenium import webdriver
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions
@@ -26,7 +27,7 @@ logging.basicConfig(
     datefmt='%Y-%m-%d %H:%M:%S')
 
 def notify(text):
-    webhook_url = 'https://hooks.slack.com/services/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'
+    webhook_url = Pit.get('slack-my-url')
     requests.post(webhook_url, data = json.dumps({
         "text": text
     }))
